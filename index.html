@@ -31,31 +31,55 @@
           var blocked = document.getElementById("blocked");
           var blockedSample = document.getElementById("blocked-sample");
           var tweetButton = document.getElementById("tweet");
+          var apiKey = "AIzaSyA5lQGKTEpbES_2IvWkPq1hF_xE-tPlPRA";
 
           blocked.value = Math.ceil(Math.random() * 100);
           blockedSample.value = Math.ceil(Math.random() * 100000);
 
 
           var makeTweet = function() {
-            return "https://twitter.com/intent/tweet?text=" +
-                   encodeURIComponent(
-                    "なんでこんなブロックされてんのｗｗ自分嫌われすぎｗｗｗ\n" +
-                    "わたしは" +
-                    blocked.value +
-                    "人からブロックされています(サンプル " +
-                    blockedSample.value + "人)\n" +
-                    url.value);
+            return new Promise(function(resolve, reject) {
+              var message = "https://twitter.com/intent/tweet?text=" +
+                    encodeURIComponent(
+                     "なんでこんなブロックされてんのｗｗ自分嫌われすぎｗｗｗ\n" +
+                     "わたしは" +
+                     blocked.value +
+                     "人からブロックされています(サンプル " +
+                     blockedSample.value + "人)\n");
+              var xhr = new XMLHttpRequest();
+              xhr.open("POST", "https://www.googleapis.com/urlshortener/v1/url?key="+ apiKey);
+              xhr.setRequestHeader("Content-Type", "application/json");
+              xhr.send(JSON.stringify({"longUrl": url.value}));
+              xhr.addEventListener("load", function() {
+                if(xhr.status === 200) {
+                  resolve(message + JSON.parse(xhr.response).id);
+                } else {
+                  reject(message + url.value);
+                }
+              });
+              xhr.addEventListener("error", function() {
+                reject(message + url.value);
+              });
+            });
           };
           [url, blocked, blockedSample].forEach(function(elm) {
             elm.addEventListener("keydown", function(e) {
               if(e.keyCode === 13) {
-                window.open(makeTweet());
+                makeTweet().then(function(message) {
+                  window.open(message);
+                }).catch(function(message) {
+                  window.open(message);
+                });
               }
             });
           });
 
           tweet.addEventListener("click", function() {
-            window.open(makeTweet());
+            makeTweet().then(function(message) {
+              window.open(message);
+            }).catch(function(message) {
+              window.open(message);
+            });
           })
         });
       })();
